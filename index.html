@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestionnaire de Visiteurs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary:       #1e40af;
+  --primary-light: #3b82f6;
+  --success:       #059669;
+  --warning:       #d97706;
+  --danger:        #dc2626;
+  --bg:            #f1f5f9;
+  --card:          #ffffff;
+  --border:        #e2e8f0;
+  --text:          #0f172a;
+  --muted:         #64748b;
+  --radius:        12px;
+  --shadow:        0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+.header {
+  background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+  color: white;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 60px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-tabs { display: flex; gap: 4px; }
+
+.nav-tab {
+  padding: 6px 18px;
+  border-radius: 7px;
+  border: none;
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.75);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.nav-tab.active { background: white; color: var(--primary); }
+.nav-tab:hover:not(.active) { background: rgba(255,255,255,.22); color: white; }
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 7px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.settings-btn:hover { background: rgba(255,255,255,.22); }
+
+/* ── Layout ───────────────────────────────────────────── */
+main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px; }
+.hidden { display: none !important; }
+
+/* ── Stats bar ────────────────────────────────────────── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.stat-value.present { color: var(--success); }
+
+/* ── Main grid ────────────────────────────────────────── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* ── Card ─────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafbfc;
+}
+
+.card-title { font-size: 13px; font-weight: 700; }
+.card-meta  { font-size: 12px; font-weight: 600; color: var(--muted); }
+.card-body  { padding: 18px; }
+
+/* ── Form ─────────────────────────────────────────────── */
+.form-group { margin-bottom: 12px; }
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: #f8fafc;
+  transition: border-color .15s, background .15s;
+}
+.form-input:focus { outline: none; border-color: var(--primary-light); background: white; }
+
+.btn-register {
+  width: 100%;
+  padding: 11px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .15s, transform .1s;
+  margin-top: 4px;
+}
+.btn-register:hover  { opacity: .9; transform: translateY(-1px); }
+.btn-register:active { transform: translateY(0); }
+
+/* ── Active list ──────────────────────────────────────── */
+.active-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--muted);
+  font-size: 13px;
+  gap: 8px;
+  text-align: center;
+}
+.empty-icon { font-size: 28px; }
+
+/* ── Visitor card ─────────────────────────────────────── */
+.visitor-card {
+  background: #f8fafc;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: border-color .3s, background .3s;
+}
+.visitor-card.warning { border-color: #fbbf24; background: #fffbeb; }
+.visitor-card.danger  { border-color: #fca5a5; background: #fef2f2;
+  animation: pulse-border 2s infinite; }
+
+@keyframes pulse-border {
+  0%, 100% { border-color: #fca5a5; }
+  50%       { border-color: #ef4444; }
+}
+
+.visitor-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.visitor-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.visitor-info { flex: 1; min-width: 0; }
+.visitor-name {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.visitor-company {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-checkout {
+  padding: 4px 10px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.btn-checkout:hover { border-color: var(--success); color: var(--success); background: #f0fdf4; }
+
+/* ── Timer / progress ─────────────────────────────────── */
+.progress-wrap {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .8s ease, background-color .5s;
+}
+.progress-bar.ok      { background: var(--success); }
+.progress-bar.warning { background: var(--warning); }
+.progress-bar.danger  { background: var(--danger); }
+
+.visitor-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.timer-val { font-weight: 700; font-size: 12px; }
+.timer-val.ok      { color: var(--success); }
+.timer-val.warning { color: var(--warning); }
+.timer-val.danger  { color: var(--danger); }
+
+/* ── History table ────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+th {
+  text-align: left;
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+  white-space: nowrap;
+}
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-auto   { background: #fee2e2; color: #dc2626; }
+.badge-manuel { background: #dcfce7; color: #16a34a; }
+
+/* ── Stats page ───────────────────────────────────────── */
+.period-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.btn-period {
+  padding: 7px 20px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.btn-period.active { background: var(--primary); border-color: var(--primary); color: white; }
+.btn-period:hover:not(.active) { border-color: var(--primary-light); color: var(--primary); }
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.chart-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.chart-wrap { position: relative; height: 260px; }
+
+/* ── Modal ────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 320px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.2);
+}
+.modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+
+.btn-cancel {
+  padding: 8px 16px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+}
+.btn-save {
+  padding: 8px 18px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .stats-bar, .stats-summary { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .header-title .title-text { display: none; }
+  main { padding: 16px 12px 40px; }
+  .header { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-title">
+    <span>🏢</span>
+    <span class="title-text">Gestionnaire de Visiteurs</span>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" id="tab-btn-accueil" onclick="switchTab('accueil')">🏠 Accueil</button>
+    <button class="nav-tab"        id="tab-btn-stats"   onclick="switchTab('stats')">📊 Statistiques</button>
+  </nav>
+  <button class="settings-btn" onclick="openSettings()">
+    ⚙️ <span id="lbl-duree">120 min</span>
+  </button>
+</header>
+
+<!-- ══════════════════════════════════════════════════════
+     ACCUEIL
+══════════════════════════════════════════════════════ -->
+<div id="tab-accueil">
+<main>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Présents maintenant</div>
+      <div class="stat-value present" id="s-present">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Visiteurs aujourd'hui</div>
+      <div class="stat-value" id="s-today">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pic simultané</div>
+      <div class="stat-value" id="s-peak">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Durée moyenne</div>
+      <div class="stat-value" id="s-avg" style="font-size:22px">—</div>
+    </div>
+  </div>
+
+  <!-- Form + Active -->
+  <div class="main-grid">
+
+    <!-- Form -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">✏️ Enregistrer un visiteur</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Nom complet *</label>
+          <input class="form-input" id="inp-nom"     type="text" placeholder="Jean Dupont" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Société</label>
+          <input class="form-input" id="inp-societe" type="text" placeholder="Acme Corp"   autocomplete="off">
+        </div>
+        <button class="btn-register" onclick="registerVisitor()">✅ Enregistrer l'arrivée</button>
+      </div>
+    </div>
+
+    <!-- Active visitors -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">👥 Visiteurs présents</span>
+        <span class="card-meta" id="active-count">0 personne(s)</span>
+      </div>
+      <div id="active-list" class="active-list">
+        <div class="empty-state">
+          <div class="empty-icon">🚪</div>
+          <div>Aucun visiteur présent</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📋 Historique du jour</span>
+      <span class="card-meta" id="history-count">0 visite(s)</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Visiteur</th><th>Société</th><th>Arrivée</th>
+            <th>Départ</th><th>Durée</th><th>Type</th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">
+            Aucune visite terminée aujourd'hui
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     STATISTIQUES
+══════════════════════════════════════════════════════ -->
+<div id="tab-stats" class="hidden">
+<main>
+
+  <div class="period-controls">
+    <button class="btn-period active" id="btn-week"  onclick="setPeriod('week')">7 derniers jours</button>
+    <button class="btn-period"        id="btn-month" onclick="setPeriod('month')">30 derniers jours</button>
+  </div>
+
+  <div class="stats-summary" id="stats-summary"></div>
+
+  <div class="chart-card">
+    <div class="chart-title">Visiteurs par jour</div>
+    <div class="chart-wrap">
+      <canvas id="chart-visitors"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📅 Détail par jour</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Visiteurs</th><th>Pic simultané</th><th>Durée moyenne</th></tr>
+        </thead>
+        <tbody id="stats-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay hidden" id="modal-settings">
+  <div class="modal">
+    <h3>⚙️ Paramètres</h3>
+    <div class="form-group">
+      <label class="form-label">Durée max de visite (minutes)</label>
+      <input class="form-input" id="inp-duree-max" type="number" min="10" max="480">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettings()">Annuler</button>
+      <button class="btn-save"   onclick="saveSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+
+let state = { active: [], history: [], settings: { dureeMax: 120 } };
+let chartInst = null;
+let period    = 'week';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('visiteurs_v1');
+    if (raw) {
+      const p = JSON.parse(raw);
+      state.active   = p.active   || [];
+      state.history  = p.history  || [];
+      state.settings = { dureeMax: 120, ...(p.settings || {}) };
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('visiteurs_v1', JSON.stringify(state));
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function fmtMs(ms) {
+  const m = Math.floor(Math.abs(ms) / 60000);
+  const h = Math.floor(m / 60), r = m % 60;
+  return h > 0 ? `${h}h${String(r).padStart(2,'0')}` : `${m} min`;
+}
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDateShort(d) {
+  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function initials(nom) {
+  return nom.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0,2).toUpperCase() || '?';
+}
+
+function dayStart(d) {
+  const x = new Date(d); x.setHours(0,0,0,0); return x.getTime();
+}
+
+function todayStart() { return dayStart(new Date()); }
+
+function todayHistory() {
+  const ts = todayStart();
+  return state.history.filter(v => v.arrivee >= ts);
+}
+
+// ═══════════════════════════════════════════════════════
+// CORE LOGIC
+// ═══════════════════════════════════════════════════════
+
+function registerVisitor() {
+  const nom    = document.getElementById('inp-nom').value.trim();
+  const societe = document.getElementById('inp-societe').value.trim();
+  if (!nom) {
+    const el = document.getElementById('inp-nom');
+    el.style.borderColor = 'var(--danger)';
+    el.focus();
+    setTimeout(() => el.style.borderColor = '', 1500);
+    return;
+  }
+  state.active.push({ id: uid(), nom, societe, arrivee: Date.now(), dureeMax: state.settings.dureeMax });
+  saveState();
+  document.getElementById('inp-nom').value = '';
+  document.getElementById('inp-societe').value = '';
+  document.getElementById('inp-nom').focus();
+  render();
+}
+
+function checkoutVisitor(id, type) {
+  const idx = state.active.findIndex(v => v.id === id);
+  if (idx === -1) return;
+  const v = state.active.splice(idx, 1)[0];
+  state.history.push({ ...v, depart: Date.now(), typeDepart: type });
+  saveState();
+  render();
+}
+
+function checkAutoCheckouts() {
+  const now = Date.now();
+  let changed = false;
+  [...state.active].forEach(v => {
+    if ((now - v.arrivee) / 60000 >= v.dureeMax) {
+      checkoutVisitor(v.id, 'auto');
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS COMPUTATION
+// ═══════════════════════════════════════════════════════
+
+function computePeak(visitors) {
+  const now = Date.now();
+  const evts = [];
+  visitors.forEach(v => {
+    evts.push({ t: v.arrivee, d: 1 });
+    evts.push({ t: v.depart || now, d: -1 });
+  });
+  evts.sort((a, b) => a.t - b.t);
+  let peak = 0, cur = 0;
+  evts.forEach(e => { cur += e.d; if (cur > peak) peak = cur; });
+  return peak;
+}
+
+function computeDay(start) {
+  const end  = start + 86400000;
+  const hist = state.history.filter(v => v.arrivee >= start && v.arrivee < end);
+  const isToday = start === todayStart();
+  const all  = isToday ? [...hist, ...state.active] : hist;
+  const done = hist.filter(v => v.depart);
+  const avgMs = done.length ? done.reduce((s, v) => s + (v.depart - v.arrivee), 0) / done.length : 0;
+  return { total: all.length, peak: computePeak(all), avgMs };
+}
+
+function getSeries(days) {
+  const out = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
+    out.push({ date: new Date(d), label: fmtDateShort(new Date(d)), ...computeDay(d.getTime()) });
+  }
+  return out;
+}
+
+function todayStats() {
+  return computeDay(todayStart());
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER — ACCUEIL
+// ═══════════════════════════════════════════════════════
+
+function render() {
+  renderHeaderStats();
+  renderActive();
+  renderHistory();
+}
+
+function renderHeaderStats() {
+  const { total, peak, avgMs } = todayStats();
+  document.getElementById('s-present').textContent = state.active.length;
+  document.getElementById('s-today').textContent   = total;
+  document.getElementById('s-peak').textContent    = peak;
+  document.getElementById('s-avg').textContent     = avgMs > 0 ? fmtMs(avgMs) : '—';
+}
+
+function renderActive() {
+  const now  = Date.now();
+  const list = document.getElementById('active-list');
+  document.getElementById('active-count').textContent = `${state.active.length} personne(s)`;
+
+  if (!state.active.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🚪</div><div>Aucun visiteur présent</div></div>`;
+    return;
+  }
+
+  list.innerHTML = state.active.map(v => {
+    const elapsed  = now - v.arrivee;
+    const maxMs    = v.dureeMax * 60000;
+    const pct      = Math.min(100, elapsed / maxMs * 100);
+    const status   = pct >= 100 ? 'danger' : pct >= 75 ? 'warning' : 'ok';
+    const exitTime = fmtTime(v.arrivee + maxMs);
+
+    return `
+    <div class="visitor-card ${status}">
+      <div class="visitor-top">
+        <div class="visitor-avatar">${initials(v.nom)}</div>
+        <div class="visitor-info">
+          <div class="visitor-name">${v.nom}</div>
+          <div class="visitor-company">${v.societe || 'Sans société'} · arrivée ${fmtTime(v.arrivee)}</div>
+        </div>
+        <button class="btn-checkout" onclick="checkoutVisitor('${v.id}','manuel')">Sorti</button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar ${status}" style="width:${pct.toFixed(1)}%"></div>
+      </div>
+      <div class="visitor-times">
+        <span class="timer-val ${status}">${fmtMs(elapsed)} / ${v.dureeMax} min</span>
+        <span>Sortie prévue : ${exitTime}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const hist  = todayHistory().slice().reverse();
+  const tbody = document.getElementById('history-body');
+  document.getElementById('history-count').textContent = `${hist.length} visite(s)`;
+
+  if (!hist.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Aucune visite terminée aujourd'hui</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = hist.map(v => {
+    const dur   = v.depart ? fmtMs(v.depart - v.arrivee) : '—';
+    const badge = v.typeDepart === 'auto'
+      ? '<span class="badge badge-auto">⏱ auto</span>'
+      : '<span class="badge badge-manuel">✓ manuel</span>';
+    return `<tr>
+      <td><strong>${v.nom}</strong></td>
+      <td>${v.societe || '—'}</td>
+      <td>${fmtTime(v.arrivee)}</td>
+      <td>${v.depart ? fmtTime(v.depart) : '—'}</td>
+      <td>${dur}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER — STATS PAGE
+// ═══════════════════════════════════════════════════════
+
+function renderStatsPage() {
+  const days   = period === 'week' ? 7 : 30;
+  const series = getSeries(days);
+
+  const totalVis = series.reduce((s, d) => s + d.total, 0);
+  const maxPeak  = series.reduce((m, d) => Math.max(m, d.peak), 0);
+  const allDone  = state.history.filter(v => v.depart && v.arrivee >= Date.now() - days * 86400000);
+  const avgDur   = allDone.length
+    ? fmtMs(allDone.reduce((s, v) => s + (v.depart - v.arrivee), 0) / allDone.length)
+    : '—';
+  const daysWithV = series.filter(d => d.total > 0).length;
+  const avgPerDay = daysWithV ? (totalVis / daysWithV).toFixed(1) : '0';
+
+  document.getElementById('stats-summary').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total visiteurs</div><div class="stat-value">${totalVis}</div></div>
+    <div class="stat-card"><div class="stat-label">Moy. / jour actif</div><div class="stat-value">${avgPerDay}</div></div>
+    <div class="stat-card"><div class="stat-label">Pic sur la période</div><div class="stat-value">${maxPeak}</div></div>
+    <div class="stat-card"><div class="stat-label">Durée moy. visite</div><div class="stat-value" style="font-size:22px">${avgDur}</div></div>`;
+
+  // Chart
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+  const ctx = document.getElementById('chart-visitors').getContext('2d');
+  chartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: series.map(d => d.label),
+      datasets: [{
+        label: 'Visiteurs',
+        data:  series.map(d => d.total),
+        backgroundColor: series.map(d => d.total > 0 ? 'rgba(30,64,175,.65)' : 'rgba(203,213,225,.4)'),
+        borderColor:     series.map(d => d.total > 0 ? '#1e40af' : '#cbd5e1'),
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => `${c.parsed.y} visiteur(s)` } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }
+      }
+    }
+  });
+
+  // Table
+  document.getElementById('stats-body').innerHTML = series.slice().reverse().map(d => `
+    <tr>
+      <td>${d.label}</td>
+      <td>${d.total}</td>
+      <td>${d.peak}</td>
+      <td>${d.avgMs > 0 ? fmtMs(d.avgMs) : '—'}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION & SETTINGS
+// ═══════════════════════════════════════════════════════
+
+function switchTab(tab) {
+  document.getElementById('tab-accueil').classList.toggle('hidden', tab !== 'accueil');
+  document.getElementById('tab-stats').classList.toggle('hidden',   tab !== 'stats');
+  document.getElementById('tab-btn-accueil').classList.toggle('active', tab === 'accueil');
+  document.getElementById('tab-btn-stats').classList.toggle('active',   tab === 'stats');
+  if (tab === 'stats') renderStatsPage();
+}
+
+function setPeriod(p) {
+  period = p;
+  document.getElementById('btn-week').classList.toggle('active',  p === 'week');
+  document.getElementById('btn-month').classList.toggle('active', p === 'month');
+  renderStatsPage();
+}
+
+function openSettings() {
+  document.getElementById('inp-duree-max').value = state.settings.dureeMax;
+  document.getElementById('modal-settings').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('modal-settings').classList.add('hidden');
+}
+function saveSettings() {
+  const v = parseInt(document.getElementById('inp-duree-max').value);
+  if (v >= 10 && v <= 480) {
+    state.settings.dureeMax = v;
+    document.getElementById('lbl-duree').textContent = `${v} min`;
+    saveState();
+  }
+  closeSettings();
+}
+
+// Close modal on overlay click
+document.getElementById('modal-settings').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════
+
+document.getElementById('inp-nom').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('inp-societe').focus();
+});
+document.getElementById('inp-societe').addEventListener('keydown', e => {
+  if (e.key === 'Enter') registerVisitor();
+});
+
+// ═══════════════════════════════════════════════════════
+// TICK — every second
+// ═══════════════════════════════════════════════════════
+
+function tick() {
+  checkAutoCheckouts();
+  renderActive();
+  renderHeaderStats();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+
+loadState();
+document.getElementById('lbl-duree').textContent = `${state.settings.dureeMax} min`;
+render();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
