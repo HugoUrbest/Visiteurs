@@ -605,6 +605,7 @@ tr:hover td { background: #f8fafc; }
   <div class="period-controls">
     <button class="btn-period active" id="btn-week"  onclick="setPeriod('week')">7 derniers jours</button>
     <button class="btn-period"        id="btn-month" onclick="setPeriod('month')">30 derniers jours</button>
+    <button class="btn-period"        id="btn-year"  onclick="setPeriod('year')">12 derniers mois</button>
   </div>
 
   <div class="stats-summary" id="stats-summary"></div>
@@ -800,6 +801,25 @@ function getSeries(days) {
   return out;
 }
 
+function getMonthSeries() {
+  const out = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const start = d.getTime();
+    const end   = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+    const hist  = state.history.filter(v => v.arrivee >= start && v.arrivee < end);
+    const isCurrentMonth = (i === 0);
+    const all   = isCurrentMonth ? [...hist, ...state.active] : hist;
+    const done  = hist.filter(v => v.depart);
+    const avgMs = done.length ? done.reduce((s, v) => s + (v.depart - v.arrivee), 0) / done.length : 0;
+    const peak  = computePeak(all);
+    const label = d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+    out.push({ date: new Date(d), label, total: all.length, peak, avgMs });
+  }
+  return out;
+}
+
 function todayStats() {
   return computeDay(todayStart());
 }
@@ -891,12 +911,14 @@ function renderHistory() {
 // ═══════════════════════════════════════════════════════
 
 function renderStatsPage() {
-  const days   = period === 'week' ? 7 : 30;
-  const series = getSeries(days);
+  const series = period === 'year' ? getMonthSeries()
+               : getSeries(period === 'week' ? 7 : 30);
+  const cutoff = period === 'year' ? Date.now() - 365 * 86400000
+               : Date.now() - (period === 'week' ? 7 : 30) * 86400000;
 
   const totalVis = series.reduce((s, d) => s + d.total, 0);
   const maxPeak  = series.reduce((m, d) => Math.max(m, d.peak), 0);
-  const allDone  = state.history.filter(v => v.depart && v.arrivee >= Date.now() - days * 86400000);
+  const allDone  = state.history.filter(v => v.depart && v.arrivee >= cutoff);
   const avgDur   = allDone.length
     ? fmtMs(allDone.reduce((s, v) => s + (v.depart - v.arrivee), 0) / allDone.length)
     : '—';
@@ -940,6 +962,8 @@ function renderStatsPage() {
   });
 
   // Table
+  const thPeriode = period === 'year' ? 'Mois' : 'Date';
+  document.querySelector('#stats-body').closest('table').querySelector('thead tr th').textContent = thPeriode;
   document.getElementById('stats-body').innerHTML = series.slice().reverse().map(d => `
     <tr>
       <td>${d.label}</td>
@@ -965,6 +989,7 @@ function setPeriod(p) {
   period = p;
   document.getElementById('btn-week').classList.toggle('active',  p === 'week');
   document.getElementById('btn-month').classList.toggle('active', p === 'month');
+  document.getElementById('btn-year').classList.toggle('active',  p === 'year');
   renderStatsPage();
 }
 
