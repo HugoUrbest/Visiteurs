@@ -467,6 +467,21 @@ tr:hover td { background: #f8fafc; }
   font-family: inherit;
 }
 
+.btn-lang {
+  padding: 5px 12px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 7px;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: .5px;
+  transition: all .15s;
+}
+.btn-lang:hover { background: rgba(255,255,255,.25); }
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 900px) {
   .main-grid { grid-template-columns: 1fr; }
@@ -493,6 +508,7 @@ tr:hover td { background: #f8fafc; }
     <button class="nav-tab active" id="tab-btn-accueil" onclick="switchTab('accueil')">🏠 Accueil</button>
     <button class="nav-tab"        id="tab-btn-stats"   onclick="switchTab('stats')">📊 Statistiques</button>
   </nav>
+  <button class="btn-lang" id="btn-lang" onclick="toggleLang()">EN</button>
 </header>
 
 <!-- ══════════════════════════════════════════════════════
@@ -504,19 +520,19 @@ tr:hover td { background: #f8fafc; }
   <!-- Stats bar -->
   <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-label">Présents maintenant</div>
+      <div class="stat-label" id="lbl-present">Présents maintenant</div>
       <div class="stat-value present" id="s-present">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Visiteurs aujourd'hui</div>
+      <div class="stat-label" id="lbl-today">Visiteurs aujourd'hui</div>
       <div class="stat-value" id="s-today">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Pic simultané</div>
+      <div class="stat-label" id="lbl-peak">Pic simultané</div>
       <div class="stat-value" id="s-peak">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Durée moyenne</div>
+      <div class="stat-label" id="lbl-avg">Durée moyenne</div>
       <div class="stat-value" id="s-avg" style="font-size:22px">—</div>
     </div>
   </div>
@@ -527,19 +543,19 @@ tr:hover td { background: #f8fafc; }
     <!-- Form -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">✏️ Enregistrer un visiteur</span>
+        <span class="card-title" id="lbl-form-title">✏️ Enregistrer un visiteur</span>
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label class="form-label">Nom complet *</label>
+          <label class="form-label" id="lbl-form-name">Nom complet *</label>
           <input class="form-input" id="inp-nom"     type="text" placeholder="Jean Dupont" autocomplete="off">
         </div>
         <div class="form-group">
-          <label class="form-label">Société</label>
+          <label class="form-label" id="lbl-form-company">Société</label>
           <input class="form-input" id="inp-societe" type="text" placeholder="Acme Corp"   autocomplete="off">
         </div>
         <div class="duree-group">
-          <label class="form-label">Durée de visite</label>
+          <label class="form-label" id="lbl-form-duration">Durée de visite</label>
           <div class="duree-buttons" id="duree-buttons">
             <button class="btn-duree" onclick="selectDuree(30)"  id="d-30">30 min</button>
             <button class="btn-duree" onclick="selectDuree(60)"  id="d-60">1h</button>
@@ -550,14 +566,14 @@ tr:hover td { background: #f8fafc; }
             <button class="btn-duree" onclick="selectDuree(480)" id="d-480">Journée</button>
           </div>
         </div>
-        <button class="btn-register" onclick="registerVisitor()">✅ Enregistrer l'arrivée</button>
+        <button class="btn-register" id="btn-register" onclick="registerVisitor()">✅ Enregistrer l'arrivée</button>
       </div>
     </div>
 
     <!-- Active visitors -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">👥 Visiteurs présents</span>
+        <span class="card-title" id="lbl-active-title">👥 Visiteurs présents</span>
         <span class="card-meta" id="active-count">0 personne(s)</span>
       </div>
       <div id="active-list" class="active-list">
@@ -573,15 +589,16 @@ tr:hover td { background: #f8fafc; }
   <!-- History -->
   <div class="card">
     <div class="card-header">
-      <span class="card-title">📋 Historique du jour</span>
+      <span class="card-title" id="lbl-history-title">📋 Historique du jour</span>
       <span class="card-meta" id="history-count">0 visite(s)</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Visiteur</th><th>Société</th><th>Arrivée</th>
-            <th>Départ</th><th>Durée</th><th>Type</th>
+            <th id="th-visitor">Visiteur</th><th id="th-company">Société</th>
+            <th id="th-arrival">Arrivée</th><th id="th-departure">Départ</th>
+            <th id="th-duration">Durée</th><th id="th-type">Type</th>
           </tr>
         </thead>
         <tbody id="history-body">
@@ -606,12 +623,13 @@ tr:hover td { background: #f8fafc; }
     <button class="btn-period active" id="btn-week"  onclick="setPeriod('week')">7 derniers jours</button>
     <button class="btn-period"        id="btn-month" onclick="setPeriod('month')">30 derniers jours</button>
     <button class="btn-period"        id="btn-year"  onclick="setPeriod('year')">12 derniers mois</button>
+
   </div>
 
   <div class="stats-summary" id="stats-summary"></div>
 
   <div class="chart-card">
-    <div class="chart-title">Visiteurs par jour</div>
+    <div class="chart-title" id="lbl-chart-title">Visiteurs par jour</div>
     <div class="chart-wrap">
       <canvas id="chart-visitors"></canvas>
     </div>
@@ -619,12 +637,15 @@ tr:hover td { background: #f8fafc; }
 
   <div class="card">
     <div class="card-header">
-      <span class="card-title">📅 Détail par jour</span>
+      <span class="card-title" id="lbl-detail-title">📅 Détail par jour</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Date</th><th>Visiteurs</th><th>Pic simultané</th><th>Durée moyenne</th></tr>
+          <tr>
+            <th id="th-date">Date</th><th id="th-visitors">Visiteurs</th>
+            <th id="th-peak-s">Pic simultané</th><th id="th-avg-dur">Durée moyenne</th>
+          </tr>
         </thead>
         <tbody id="stats-body"></tbody>
       </table>
@@ -637,14 +658,14 @@ tr:hover td { background: #f8fafc; }
 <!-- Settings modal -->
 <div class="modal-overlay hidden" id="modal-settings">
   <div class="modal">
-    <h3>⚙️ Paramètres</h3>
+    <h3 id="lbl-modal-title">⚙️ Paramètres</h3>
     <div class="form-group">
-      <label class="form-label">Durée max de visite (minutes)</label>
+      <label class="form-label" id="lbl-modal-label">Durée max de visite (minutes)</label>
       <input class="form-input" id="inp-duree-max" type="number" min="10" max="480">
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeSettings()">Annuler</button>
-      <button class="btn-save"   onclick="saveSettings()">Enregistrer</button>
+      <button class="btn-cancel" id="btn-modal-cancel" onclick="closeSettings()">Annuler</button>
+      <button class="btn-save"   id="btn-modal-save"   onclick="saveSettings()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -658,7 +679,173 @@ tr:hover td { background: #f8fafc; }
 let state = { active: [], history: [], settings: { dureeMax: 120 } };
 let chartInst = null;
 let period    = 'week';
-let formDuree = null; // durée sélectionnée pour le prochain visiteur
+let formDuree = null;
+let lang      = 'fr';
+
+// ═══════════════════════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════════════════════
+
+const i18n = {
+  fr: {
+    app_title:       'Gestionnaire de Visiteurs',
+    tab_home:        '🏠 Accueil',
+    tab_stats:       '📊 Statistiques',
+    stat_present:    'Présents maintenant',
+    stat_today:      "Visiteurs aujourd'hui",
+    stat_peak:       'Pic simultané',
+    stat_avg:        'Durée moyenne',
+    form_title:      '✏️ Enregistrer un visiteur',
+    form_name:       'Nom complet *',
+    form_company:    'Société',
+    form_duration:   'Durée de visite',
+    form_submit:     "✅ Enregistrer l'arrivée",
+    ph_name:         'Jean Dupont',
+    ph_company:      'Acme Corp',
+    dur_fullday:     'Journée',
+    active_title:    '👥 Visiteurs présents',
+    active_count:    n => `${n} personne(s)`,
+    active_empty:    'Aucun visiteur présent',
+    btn_checkout:    'Sorti',
+    no_company:      'Sans société',
+    arrived:         'arrivée',
+    expected_exit:   'Sortie prévue :',
+    history_title:   '📋 Historique du jour',
+    history_count:   n => `${n} visite(s)`,
+    history_empty:   'Aucune visite terminée aujourd\'hui',
+    th_visitor:      'Visiteur',
+    th_company:      'Société',
+    th_arrival:      'Arrivée',
+    th_departure:    'Départ',
+    th_duration:     'Durée',
+    th_type:         'Type',
+    badge_auto:      '⏱ auto',
+    badge_manual:    '✓ manuel',
+    period_week:     '7 derniers jours',
+    period_month:    '30 derniers jours',
+    period_year:     '12 derniers mois',
+    sum_total:       'Total visiteurs',
+    sum_avg_day:     'Moy. / jour actif',
+    sum_peak:        'Pic sur la période',
+    sum_avg_dur:     'Durée moy. visite',
+    chart_title:     'Visiteurs par jour',
+    chart_tooltip:   n => `${n} visiteur(s)`,
+    detail_title:    '📅 Détail par jour',
+    th_date:         'Date',
+    th_month:        'Mois',
+    th_visitors:     'Visiteurs',
+    th_peak_s:       'Pic simultané',
+    th_avg_dur:      'Durée moyenne',
+    modal_title:     '⚙️ Paramètres',
+    modal_label:     'Durée max de visite (minutes)',
+    btn_cancel:      'Annuler',
+    btn_save:        'Enregistrer',
+  },
+  en: {
+    app_title:       'Visitor Manager',
+    tab_home:        '🏠 Home',
+    tab_stats:       '📊 Statistics',
+    stat_present:    'Currently present',
+    stat_today:      'Visitors today',
+    stat_peak:       'Simultaneous peak',
+    stat_avg:        'Average duration',
+    form_title:      '✏️ Register a visitor',
+    form_name:       'Full name *',
+    form_company:    'Company',
+    form_duration:   'Visit duration',
+    form_submit:     '✅ Register arrival',
+    ph_name:         'John Smith',
+    ph_company:      'Acme Corp',
+    dur_fullday:     'Full day',
+    active_title:    '👥 Present visitors',
+    active_count:    n => `${n} person(s)`,
+    active_empty:    'No visitors present',
+    btn_checkout:    'Left',
+    no_company:      'No company',
+    arrived:         'arrived',
+    expected_exit:   'Expected exit:',
+    history_title:   "📋 Today's history",
+    history_count:   n => `${n} visit(s)`,
+    history_empty:   'No completed visits today',
+    th_visitor:      'Visitor',
+    th_company:      'Company',
+    th_arrival:      'Arrival',
+    th_departure:    'Departure',
+    th_duration:     'Duration',
+    th_type:         'Type',
+    badge_auto:      '⏱ auto',
+    badge_manual:    '✓ manual',
+    period_week:     'Last 7 days',
+    period_month:    'Last 30 days',
+    period_year:     'Last 12 months',
+    sum_total:       'Total visitors',
+    sum_avg_day:     'Avg. / active day',
+    sum_peak:        'Period peak',
+    sum_avg_dur:     'Avg. visit duration',
+    chart_title:     'Visitors per day',
+    chart_tooltip:   n => `${n} visitor(s)`,
+    detail_title:    '📅 Daily detail',
+    th_date:         'Date',
+    th_month:        'Month',
+    th_visitors:     'Visitors',
+    th_peak_s:       'Simultaneous peak',
+    th_avg_dur:      'Average duration',
+    modal_title:     '⚙️ Settings',
+    modal_label:     'Max visit duration (minutes)',
+    btn_cancel:      'Cancel',
+    btn_save:        'Save',
+  }
+};
+
+function t(key)  { return i18n[lang][key]; }
+
+function toggleLang() {
+  lang = lang === 'fr' ? 'en' : 'fr';
+  document.getElementById('btn-lang').textContent = lang === 'fr' ? 'EN' : 'FR';
+  applyTranslations();
+  render();
+  if (!document.getElementById('tab-stats').classList.contains('hidden')) renderStatsPage();
+}
+
+function applyTranslations() {
+  const $ = id => document.getElementById(id);
+  document.querySelector('.title-text').textContent       = t('app_title');
+  $('tab-btn-accueil').textContent                        = t('tab_home');
+  $('tab-btn-stats').textContent                          = t('tab_stats');
+  $('lbl-present').textContent                            = t('stat_present');
+  $('lbl-today').textContent                              = t('stat_today');
+  $('lbl-peak').textContent                               = t('stat_peak');
+  $('lbl-avg').textContent                                = t('stat_avg');
+  $('lbl-form-title').textContent                         = t('form_title');
+  $('lbl-form-name').textContent                          = t('form_name');
+  $('lbl-form-company').textContent                       = t('form_company');
+  $('lbl-form-duration').textContent                      = t('form_duration');
+  $('btn-register').textContent                           = t('form_submit');
+  $('d-480').textContent                                  = t('dur_fullday');
+  $('lbl-active-title').textContent                       = t('active_title');
+  $('lbl-history-title').textContent                      = t('history_title');
+  $('th-visitor').textContent                             = t('th_visitor');
+  $('th-company').textContent                             = t('th_company');
+  $('th-arrival').textContent                             = t('th_arrival');
+  $('th-departure').textContent                           = t('th_departure');
+  $('th-duration').textContent                            = t('th_duration');
+  $('th-type').textContent                                = t('th_type');
+  $('btn-week').textContent                               = t('period_week');
+  $('btn-month').textContent                              = t('period_month');
+  $('btn-year').textContent                               = t('period_year');
+  $('lbl-chart-title').textContent                        = t('chart_title');
+  $('lbl-detail-title').textContent                       = t('detail_title');
+  $('th-date').textContent                                = t('th_date');
+  $('th-visitors').textContent                            = t('th_visitors');
+  $('th-peak-s').textContent                              = t('th_peak_s');
+  $('th-avg-dur').textContent                             = t('th_avg_dur');
+  $('lbl-modal-title').textContent                        = t('modal_title');
+  $('lbl-modal-label').textContent                        = t('modal_label');
+  $('btn-modal-cancel').textContent                       = t('btn_cancel');
+  $('btn-modal-save').textContent                         = t('btn_save');
+  $('inp-nom').placeholder                                = t('ph_name');
+  $('inp-societe').placeholder                            = t('ph_company');
+}
 
 function loadState() {
   try {
@@ -845,10 +1032,10 @@ function renderHeaderStats() {
 function renderActive() {
   const now  = Date.now();
   const list = document.getElementById('active-list');
-  document.getElementById('active-count').textContent = `${state.active.length} personne(s)`;
+  document.getElementById('active-count').textContent = t('active_count')(state.active.length);
 
   if (!state.active.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🚪</div><div>Aucun visiteur présent</div></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🚪</div><div>${t('active_empty')}</div></div>`;
     return;
   }
 
@@ -865,16 +1052,16 @@ function renderActive() {
         <div class="visitor-avatar">${initials(v.nom)}</div>
         <div class="visitor-info">
           <div class="visitor-name">${v.nom}</div>
-          <div class="visitor-company">${v.societe || 'Sans société'} · arrivée ${fmtTime(v.arrivee)}</div>
+          <div class="visitor-company">${v.societe || t('no_company')} · ${t('arrived')} ${fmtTime(v.arrivee)}</div>
         </div>
-        <button class="btn-checkout" onclick="checkoutVisitor('${v.id}','manuel')">Sorti</button>
+        <button class="btn-checkout" onclick="checkoutVisitor('${v.id}','manuel')">${t('btn_checkout')}</button>
       </div>
       <div class="progress-wrap">
         <div class="progress-bar ${status}" style="width:${pct.toFixed(1)}%"></div>
       </div>
       <div class="visitor-times">
         <span class="timer-val ${status}">${fmtMs(elapsed)} / ${v.dureeMax} min</span>
-        <span>Sortie prévue : ${exitTime}</span>
+        <span>${t('expected_exit')} ${exitTime}</span>
       </div>
     </div>`;
   }).join('');
@@ -883,18 +1070,18 @@ function renderActive() {
 function renderHistory() {
   const hist  = todayHistory().slice().reverse();
   const tbody = document.getElementById('history-body');
-  document.getElementById('history-count').textContent = `${hist.length} visite(s)`;
+  document.getElementById('history-count').textContent = t('history_count')(hist.length);
 
   if (!hist.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Aucune visite terminée aujourd'hui</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">${t('history_empty')}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = hist.map(v => {
     const dur   = v.depart ? fmtMs(v.depart - v.arrivee) : '—';
     const badge = v.typeDepart === 'auto'
-      ? '<span class="badge badge-auto">⏱ auto</span>'
-      : '<span class="badge badge-manuel">✓ manuel</span>';
+      ? `<span class="badge badge-auto">${t('badge_auto')}</span>`
+      : `<span class="badge badge-manuel">${t('badge_manual')}</span>`;
     return `<tr>
       <td><strong>${v.nom}</strong></td>
       <td>${v.societe || '—'}</td>
@@ -926,10 +1113,10 @@ function renderStatsPage() {
   const avgPerDay = daysWithV ? (totalVis / daysWithV).toFixed(1) : '0';
 
   document.getElementById('stats-summary').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total visiteurs</div><div class="stat-value">${totalVis}</div></div>
-    <div class="stat-card"><div class="stat-label">Moy. / jour actif</div><div class="stat-value">${avgPerDay}</div></div>
-    <div class="stat-card"><div class="stat-label">Pic sur la période</div><div class="stat-value">${maxPeak}</div></div>
-    <div class="stat-card"><div class="stat-label">Durée moy. visite</div><div class="stat-value" style="font-size:22px">${avgDur}</div></div>`;
+    <div class="stat-card"><div class="stat-label">${t('sum_total')}</div><div class="stat-value">${totalVis}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('sum_avg_day')}</div><div class="stat-value">${avgPerDay}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('sum_peak')}</div><div class="stat-value">${maxPeak}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('sum_avg_dur')}</div><div class="stat-value" style="font-size:22px">${avgDur}</div></div>`;
 
   // Chart
   if (chartInst) { chartInst.destroy(); chartInst = null; }
@@ -952,7 +1139,7 @@ function renderStatsPage() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => `${c.parsed.y} visiteur(s)` } }
+        tooltip: { callbacks: { label: c => t('chart_tooltip')(c.parsed.y) } }
       },
       scales: {
         y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9' } },
@@ -962,8 +1149,7 @@ function renderStatsPage() {
   });
 
   // Table
-  const thPeriode = period === 'year' ? 'Mois' : 'Date';
-  document.querySelector('#stats-body').closest('table').querySelector('thead tr th').textContent = thPeriode;
+  document.getElementById('th-date').textContent = period === 'year' ? t('th_month') : t('th_date');
   document.getElementById('stats-body').innerHTML = series.slice().reverse().map(d => `
     <tr>
       <td>${d.label}</td>
@@ -1041,8 +1227,7 @@ function tick() {
 // ═══════════════════════════════════════════════════════
 
 loadState();
-document.getElementById('lbl-duree').textContent = `${state.settings.dureeMax} min`;
-// Pré-sélectionne le bouton correspondant à la durée par défaut si elle existe
+applyTranslations();
 if (document.getElementById(`d-${state.settings.dureeMax}`)) {
   selectDuree(state.settings.dureeMax);
 }
