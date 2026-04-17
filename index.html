@@ -197,6 +197,27 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px; }
   transition: opacity .15s, transform .1s;
   margin-top: 4px;
 }
+
+/* ── Duration quick buttons ───────────────────────────── */
+.duree-group { margin-bottom: 14px; }
+.duree-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-duree {
+  flex: 1;
+  padding: 7px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+  text-align: center;
+  white-space: nowrap;
+}
+.btn-duree:hover { border-color: var(--primary-light); color: var(--primary); background: #eff6ff; }
+.btn-duree.selected { background: var(--primary); border-color: var(--primary); color: white; }
 .btn-register:hover  { opacity: .9; transform: translateY(-1px); }
 .btn-register:active { transform: translateY(0); }
 
@@ -520,6 +541,16 @@ tr:hover td { background: #f8fafc; }
           <label class="form-label">Société</label>
           <input class="form-input" id="inp-societe" type="text" placeholder="Acme Corp"   autocomplete="off">
         </div>
+        <div class="duree-group">
+          <label class="form-label">Durée de visite</label>
+          <div class="duree-buttons" id="duree-buttons">
+            <button class="btn-duree" onclick="selectDuree(30)"  id="d-30">30 min</button>
+            <button class="btn-duree" onclick="selectDuree(60)"  id="d-60">1h</button>
+            <button class="btn-duree" onclick="selectDuree(90)"  id="d-90">1h30</button>
+            <button class="btn-duree" onclick="selectDuree(120)" id="d-120">2h</button>
+            <button class="btn-duree" onclick="selectDuree(180)" id="d-180">3h</button>
+          </div>
+        </div>
         <button class="btn-register" onclick="registerVisitor()">✅ Enregistrer l'arrivée</button>
       </div>
     </div>
@@ -627,6 +658,7 @@ tr:hover td { background: #f8fafc; }
 let state = { active: [], history: [], settings: { dureeMax: 120 } };
 let chartInst = null;
 let period    = 'week';
+let formDuree = null; // durée sélectionnée pour le prochain visiteur
 
 function loadState() {
   try {
@@ -683,8 +715,15 @@ function todayHistory() {
 // CORE LOGIC
 // ═══════════════════════════════════════════════════════
 
+function selectDuree(min) {
+  formDuree = min;
+  document.querySelectorAll('.btn-duree').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById(`d-${min}`);
+  if (btn) btn.classList.add('selected');
+}
+
 function registerVisitor() {
-  const nom    = document.getElementById('inp-nom').value.trim();
+  const nom     = document.getElementById('inp-nom').value.trim();
   const societe = document.getElementById('inp-societe').value.trim();
   if (!nom) {
     const el = document.getElementById('inp-nom');
@@ -693,10 +732,14 @@ function registerVisitor() {
     setTimeout(() => el.style.borderColor = '', 1500);
     return;
   }
-  state.active.push({ id: uid(), nom, societe, arrivee: Date.now(), dureeMax: state.settings.dureeMax });
+  const dureeMax = formDuree || state.settings.dureeMax;
+  state.active.push({ id: uid(), nom, societe, arrivee: Date.now(), dureeMax });
   saveState();
   document.getElementById('inp-nom').value = '';
   document.getElementById('inp-societe').value = '';
+  // Réinitialise la sélection de durée
+  formDuree = null;
+  document.querySelectorAll('.btn-duree').forEach(b => b.classList.remove('selected'));
   document.getElementById('inp-nom').focus();
   render();
 }
@@ -975,6 +1018,10 @@ function tick() {
 
 loadState();
 document.getElementById('lbl-duree').textContent = `${state.settings.dureeMax} min`;
+// Pré-sélectionne le bouton correspondant à la durée par défaut si elle existe
+if (document.getElementById(`d-${state.settings.dureeMax}`)) {
+  selectDuree(state.settings.dureeMax);
+}
 render();
 setInterval(tick, 1000);
 </script>
